@@ -48,7 +48,16 @@ class RobotArmKinematics:
         Returns:
             Updated orientations for both joints.
         """
-        raise NotImplementedError("SO(3) integration not yet implemented")
+        omega1 = angular_velocity[:3]
+        omega2 = angular_velocity[3:]
+
+        delta_R1 = Rotation.from_rotvec(omega1 * dt)
+        delta_R2 = Rotation.from_rotvec(omega2 * dt)
+
+        R1_new = current_orientation[0] * delta_R1
+        R2_new = current_orientation[1] * delta_R2
+
+        return (R1_new, R2_new)
 
     def forward_kinematics(
         self, joint_orientations: tuple[Rotation, Rotation]
@@ -63,7 +72,13 @@ class RobotArmKinematics:
         Returns:
             End-effector position in 3D space.
         """
-        raise NotImplementedError("Forward kinematics not yet implemented")
+        R1, R2 = joint_orientations
+        L1, L2 = self.link_lengths
+
+        p1 = L1 * R1.apply([1.0, 0.0, 0.0])
+        p2 = L2 * (R1 * R2).apply([1.0, 0.0, 0.0])
+
+        return p1 + p2
 
     def geodesic_distance(
         self,
@@ -83,7 +98,10 @@ class RobotArmKinematics:
         Returns:
             Geodesic distance.
         """
-        raise NotImplementedError("Geodesic distance not yet implemented")
+        d1 = (config1[0].inv() * config2[0]).magnitude()
+        d2 = (config1[1].inv() * config2[1]).magnitude()
+
+        return float(np.sqrt(d1**2 + d2**2))
 
     def sample_random_configuration(
         self, rng: np.random.Generator | None = None

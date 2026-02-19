@@ -56,7 +56,8 @@ data/
 
 # Videos/media
 *.mp4
-*.gif
+# Root-level gifs (copies live in assets/)
+/arm_animation*.gif
 
 # Secrets
 .env

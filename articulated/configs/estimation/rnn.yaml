@@ -6,24 +6,28 @@ seed: 42
 model:
   input_size: 6          # 2 joints x 3 angular velocity components
   hidden_size: 256
-  output_size: 256       # Number of place cells
+  output_size: 64        # Number of place cells (32 per joint)
   model_type: "rnn"
   learning_rate: 1e-3
-  weight_decay: 0.0
+  weight_decay: 1e-4
+  use_init_pos: true     # Encode initial position into h0
+  dropout: 0.5           # Critical for grid-like representations (Banino 2018)
 
 data:
   batch_size: 64
   seq_length: 100
   n_trajectories_train: 1000
   n_trajectories_val: 100
-  n_place_cells: 256
+  n_place_cells: 64
   dt: 0.01
+  provide_init_pos: true # Include initial place cell activations
 
 trainer:
   max_epochs: 100
   accelerator: "auto"
   devices: 1
   log_every_n_steps: 10
+  gradient_clip_val: 1.0
 
 logging:
   wandb: false

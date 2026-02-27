@@ -1,0 +1,35 @@
+# Scaling sweep template for representation quality vs. training data.
+#
+# Notes:
+# - `base_config` points to a full training config consumed by
+#   `python -m articulated.estimation.train`.
+# - For SO(2) experiments, switch `base_config` (or `config_overrides`) to a
+#   SO(2)-capable training config once that branch is merged.
+# - Architecture-specific changes live in `architectures/*.yaml`.
+
+name: so2_repr_scaling_template
+base_config: articulated/configs/estimation/rnn.yaml
+
+# List of architecture override config files.
+architectures:
+  - articulated/configs/estimation/sweeps/so2_scaling/architectures/vanilla_rnn.yaml
+
+# Primary scaling axis.
+train_sizes: [1000, 3000, 10000, 30000, 100000]
+seeds: [0, 1, 2]
+
+# Applied after (base + architecture) for every run.
+config_overrides:
+  data:
+    n_trajectories_val: 1000
+  trainer:
+    max_epochs: 100
+
+run:
+  output_root: /mldata/huntae/runs
+  python_executable: python
+  skip_existing: true
+  stop_on_error: false
+
+evaluation:
+  representation_n_trajectories: 200

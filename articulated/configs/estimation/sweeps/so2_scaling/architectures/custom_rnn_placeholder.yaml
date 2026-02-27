@@ -1,0 +1,16 @@
+# Placeholder architecture override for future custom RNN variants.
+#
+# Copy this file and edit `name` + `overrides.model` fields once the custom
+# architecture is implemented in `StateEstimationModel`.
+
+name: custom_rnn_placeholder
+
+overrides:
+  model:
+    model_type: rnn
+    hidden_size: 256
+    dropout: 0.5
+    # Example future fields once supported by your model class:
+    # recurrent_cell: "indrnn"
+    # num_layers: 2
+    # layer_norm: true

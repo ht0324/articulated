@@ -1,0 +1,8 @@
+# Baseline vanilla RNN architecture override.
+name: vanilla_rnn
+
+overrides:
+  model:
+    model_type: rnn
+    hidden_size: 256
+    dropout: 0.5

@@ -1,0 +1,39 @@
+# Configuration for RNN state estimation on SO(2) x SO(2)
+# Usage: python -m articulated.estimation.train --config articulated/configs/estimation/rnn_so2_h64.yaml
+
+seed: 42
+
+model:
+  input_size: 2
+  hidden_size: 64
+  output_size: 64
+  init_pos_size: 4
+  model_type: "rnn"
+  learning_rate: 1e-3
+  weight_decay: 1e-4
+  use_init_pos: true
+  dropout: 0.5
+
+data:
+  batch_size: 64
+  seq_length: 100
+  n_trajectories_train: 1000
+  n_trajectories_val: 100
+  n_place_cells: 64
+  dt: 0.01
+  provide_init_pos: true
+  manifold: "so2"
+
+trainer:
+  max_epochs: 100
+  accelerator: "auto"
+  devices: 1
+  log_every_n_steps: 10
+  gradient_clip_val: 1.0
+
+logging:
+  wandb: false
+  project: "articulated-estimation"
+  save_dir: "logs"
+
+checkpoint_dir: "checkpoints/estimation/rnn_so2_h64"

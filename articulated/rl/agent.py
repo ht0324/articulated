@@ -6,7 +6,7 @@ Tasks:
 3. Compare raw vs embedded observations
 """
 
-from typing import Optional, Tuple
+from typing import Optional
 
 import gymnasium as gym
 import numpy as np
@@ -14,7 +14,12 @@ from stable_baselines3 import PPO, SAC
 from stable_baselines3.common.callbacks import EvalCallback
 from stable_baselines3.common.evaluation import evaluate_policy
 from stable_baselines3.common.monitor import Monitor
-from stable_baselines3.common.vec_env import DummyVecEnv, VecEnv, VecMonitor, VecNormalize
+from stable_baselines3.common.vec_env import (
+    DummyVecEnv,
+    VecEnv,
+    VecMonitor,
+    VecNormalize,
+)
 
 from articulated.rl.environment import ReacherWithEmbedding
 
@@ -31,6 +36,7 @@ class RLAgent:
         self,
         algorithm: str = "ppo",
         use_embedding: bool = False,
+        observation_mode: Optional[str] = None,
         embedding_model_path: Optional[str] = None,
         learning_rate: float = 3e-4,
         n_steps: int = 2048,
@@ -50,7 +56,11 @@ class RLAgent:
 
         Args:
             algorithm: RL algorithm ('ppo' or 'sac').
-            use_embedding: Whether to use embeddings.
+            use_embedding: Legacy flag controlling observation source.
+                Kept for backward compatibility; ignored when
+                observation_mode is provided.
+            observation_mode: Observation mode for policy input:
+                {"raw", "embed_only", "concat"}.
             embedding_model_path: Path to Team Estimation's checkpoint.
             learning_rate: Learning rate.
             n_steps: Number of steps per rollout (PPO only).
@@ -67,7 +77,11 @@ class RLAgent:
             seed: Random seed.
         """
         self.algorithm = algorithm.lower()
-        self.use_embedding = use_embedding
+        self.observation_mode = self._resolve_observation_mode(
+            observation_mode=observation_mode,
+            use_embedding=use_embedding,
+        )
+        self.use_embedding = self.observation_mode != "raw"
         self.embedding_model_path = embedding_model_path
         self.learning_rate = (
             float(learning_rate) if isinstance(learning_rate, str) else learning_rate
@@ -89,6 +103,23 @@ class RLAgent:
         self.model: Optional[PPO | SAC] = None
         self.embedding_model = None
         self.vec_normalize: Optional[VecNormalize] = None
+
+    @staticmethod
+    def _resolve_observation_mode(
+        observation_mode: Optional[str], use_embedding: bool
+    ) -> str:
+        """Resolve observation mode while preserving legacy configs."""
+        if observation_mode is None:
+            return "embed_only" if use_embedding else "raw"
+
+        mode = observation_mode.lower()
+        valid_modes = {"raw", "embed_only", "concat"}
+        if mode not in valid_modes:
+            raise ValueError(
+                f"Unknown observation_mode '{observation_mode}'. "
+                f"Expected one of {sorted(valid_modes)}."
+            )
+        return mode
 
     def setup(self) -> None:
         """Set up the environment and model.
@@ -188,7 +219,7 @@ class RLAgent:
                 verbose=1,
             )
 
-        tb_log_name = f"{self.algorithm}_{'embed' if self.use_embedding else 'baseline'}"
+        tb_log_name = f"{self.algorithm}_{self.observation_mode}"
         self.model.learn(
             total_timesteps=total_timesteps,
             callback=callback,
@@ -250,10 +281,11 @@ class RLAgent:
         """Create a Reacher-v5 env, optionally wrapped/normalized."""
 
         def make_env() -> gym.Env:
-            if self.use_embedding:
+            if self.observation_mode != "raw":
                 return ReacherWithEmbedding(
                     embedding_model=self.embedding_model,
                     use_embedding=True,
+                    observation_mode=self.observation_mode,
                     history_length=self.history_length,
                     render_mode=render_mode,
                 )

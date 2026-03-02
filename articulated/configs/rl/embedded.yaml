@@ -9,6 +9,7 @@ seed: 42
 agent:
   algorithm: "ppo"
   use_embedding: true
+  observation_mode: "embed_only"
   embedding_model_path: "checkpoints/estimation/best.ckpt"  # Update this path
   learning_rate: 3e-4
   n_steps: 2048

@@ -338,18 +338,27 @@ class StateEstimationModel(L.LightningModule):
     # Interface methods for other teams
     # =========================================================================
 
-    def get_embedding(self, x: torch.Tensor) -> torch.Tensor:
+    def get_embedding(
+        self, x: torch.Tensor, init_pos: Optional[torch.Tensor] = None
+    ) -> torch.Tensor:
         """Get embedding for RL (Team RL interface).
 
         Returns the final hidden state as the embedding.
 
         Args:
             x: Input trajectory of shape (batch, seq_len, input_size).
+            init_pos: Optional initial position for hidden-state initialization.
+                For SO(2), pass (cos theta1, sin theta1, cos theta2, sin theta2).
+                If omitted, falls back to an unconditioned initial hidden state.
 
         Returns:
             Embedding of shape (batch, hidden_size).
         """
-        _, hidden_states = self(x)
+        hidden = None
+        if self.use_init_pos and init_pos is not None:
+            hidden = self._encode_init_pos(init_pos)
+
+        _, hidden_states = self(x, hidden=hidden)
         return hidden_states[:, -1, :]
 
     def get_hidden_states(self, x: torch.Tensor) -> torch.Tensor:

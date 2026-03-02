@@ -1,0 +1,25 @@
+# Team RL: SO2 embedding-only observations (hidden_size=64)
+# Usage: python -m articulated.rl.train --config articulated/configs/rl/embed_only_so2_h64.yaml
+
+seed: 42
+
+agent:
+  algorithm: "ppo"
+  use_embedding: true
+  observation_mode: "embed_only"
+  embedding_model_path: "logs/estimation/rnn_so2_h64/checkpoints/last.ckpt"
+  learning_rate: 3e-4
+  n_steps: 2048
+  batch_size: 64
+  clip_range: 0.2
+  device: "cuda"
+  tensorboard_log: "logs/rl"
+  normalize_observations: true
+  normalize_rewards: false
+  clip_obs: 10.0
+  history_length: 100
+
+training:
+  total_timesteps: 500000
+  eval_freq: 50000
+  save_path: "checkpoints/rl/ppo_embed_only_so2_h64"
